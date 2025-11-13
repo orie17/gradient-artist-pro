@@ -8,10 +8,7 @@ const Index = () => {
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [gradientAngle, setGradientAngle] = useState(45);
-  const [gradient] = useState({
-    angle: gradientAngle,
-    colors: ["#ec4899", "#8b5cf6", "#3b82f6"],
-  });
+  const [gradientColors, setGradientColors] = useState(["#ec4899", "#8b5cf6", "#3b82f6"]);
 
   const handleAddShape = (type: "circle" | "square" | "wave") => {
     const newShape: Shape = {
@@ -25,6 +22,10 @@ const Index = () => {
       opacity: 0.6 + Math.random() * 0.4,
     };
     setShapes([...shapes, newShape]);
+  };
+
+  const handleDeleteLayer = (id: string) => {
+    setShapes(shapes.filter((shape) => shape.id !== id));
   };
 
   const handleExport = (format: "png" | "jpeg") => {
@@ -44,7 +45,7 @@ const Index = () => {
         <Toolbar onAddShape={handleAddShape} />
         <Canvas
           shapes={shapes}
-          gradient={{ ...gradient, angle: gradientAngle }}
+          gradient={{ angle: gradientAngle, colors: gradientColors }}
           animationSpeed={animationSpeed}
         />
         <PropertiesPanel
@@ -52,9 +53,12 @@ const Index = () => {
           onAnimationSpeedChange={setAnimationSpeed}
           gradientAngle={gradientAngle}
           onGradientAngleChange={setGradientAngle}
+          gradientColors={gradientColors}
+          onGradientColorsChange={setGradientColors}
           onExport={handleExport}
           layers={shapes}
           onLayerSelect={(id) => console.log("Selected layer:", id)}
+          onLayerDelete={handleDeleteLayer}
         />
       </div>
     </div>
