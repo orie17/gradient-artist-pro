@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Toolbar } from "@/components/Toolbar";
 import { Canvas, Shape } from "@/components/Canvas";
 import { PropertiesPanel } from "@/components/PropertiesPanel";
 
 const Index = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
+  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [gradientAngle, setGradientAngle] = useState(45);
   const [gradientColors, setGradientColors] = useState(["#ec4899", "#8b5cf6", "#3b82f6"]);
@@ -26,10 +28,23 @@ const Index = () => {
 
   const handleDeleteLayer = (id: string) => {
     setShapes(shapes.filter((shape) => shape.id !== id));
+    if (selectedShapeId === id) {
+      setSelectedShapeId(null);
+    }
+  };
+
+  const handleLayerSelect = (id: string) => {
+    setSelectedShapeId(id);
+  };
+
+  const handleShapeUpdate = (id: string, updates: Partial<Shape>) => {
+    setShapes(shapes.map((shape) => 
+      shape.id === id ? { ...shape, ...updates } : shape
+    ));
   };
 
   const handleExport = (format: "png" | "jpeg") => {
-    const canvas = document.querySelector("canvas");
+    const canvas = canvasRef.current;
     if (!canvas) return;
 
     const link = document.createElement("a");
@@ -38,12 +53,15 @@ const Index = () => {
     link.click();
   };
 
+  const selectedShape = shapes.find((shape) => shape.id === selectedShapeId) || null;
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Toolbar onAddShape={handleAddShape} />
         <Canvas
+          ref={canvasRef}
           shapes={shapes}
           gradient={{ angle: gradientAngle, colors: gradientColors }}
           animationSpeed={animationSpeed}
@@ -57,8 +75,11 @@ const Index = () => {
           onGradientColorsChange={setGradientColors}
           onExport={handleExport}
           layers={shapes}
-          onLayerSelect={(id) => console.log("Selected layer:", id)}
+          selectedShape={selectedShape}
+          onLayerSelect={handleLayerSelect}
           onLayerDelete={handleDeleteLayer}
+          onShapeUpdate={handleShapeUpdate}
+          canvasRef={canvasRef}
         />
       </div>
     </div>

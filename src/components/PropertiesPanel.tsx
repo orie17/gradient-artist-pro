@@ -4,9 +4,29 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Download, Palette, Layers, Settings, Trash2, Plus } from "lucide-react";
+import { Download, Palette, Layers, Settings, Trash2, Plus, Sparkles, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import type { Shape } from "./Canvas";
+import { GradientPresets, type GradientPreset } from "./GradientPresets";
+import { ShapePropertyEditor } from "./ShapePropertyEditor";
+import { VideoExport } from "./VideoExport";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface PropertiesPanelProps {
   animationSpeed: number;
@@ -17,9 +37,76 @@ interface PropertiesPanelProps {
   onGradientColorsChange: (colors: string[]) => void;
   onExport: (format: "png" | "jpeg") => void;
   layers: Shape[];
+  selectedShape: Shape | null;
   onLayerSelect: (id: string) => void;
   onLayerDelete: (id: string) => void;
+  onShapeUpdate: (id: string, updates: Partial<Shape>) => void;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
 }
+
+interface SortableColorStopProps {
+  color: string;
+  index: number;
+  onColorChange: (index: number, color: string) => void;
+  onRemove: (index: number) => void;
+  disabled: boolean;
+}
+
+const SortableColorStop = ({
+  color,
+  index,
+  onColorChange,
+  onRemove,
+  disabled,
+}: SortableColorStopProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `color-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <Input
+        type="color"
+        value={color}
+        onChange={(e) => onColorChange(index, e.target.value)}
+        className="w-12 h-8 p-1 cursor-pointer"
+      />
+      <Input
+        type="text"
+        value={color}
+        onChange={(e) => onColorChange(index, e.target.value)}
+        className="flex-1 h-8 text-xs"
+      />
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => onRemove(index)}
+        className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+        disabled={disabled}
+      >
+        <Trash2 className="w-3 h-3" />
+      </Button>
+    </div>
+  );
+};
 
 export const PropertiesPanel = ({
   animationSpeed,
@@ -30,9 +117,29 @@ export const PropertiesPanel = ({
   onGradientColorsChange,
   onExport,
   layers,
+  selectedShape,
   onLayerSelect,
   onLayerDelete,
+  onShapeUpdate,
+  canvasRef,
 }: PropertiesPanelProps) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = Number(active.id.toString().split("-")[1]);
+      const newIndex = Number(over.id.toString().split("-")[1]);
+      const newColors = arrayMove(gradientColors, oldIndex, newIndex);
+      onGradientColorsChange(newColors);
+    }
+  };
   const handleExport = (format: "png" | "jpeg") => {
     onExport(format);
     toast.success(`Exported as ${format.toUpperCase()}`, {
@@ -67,10 +174,23 @@ export const PropertiesPanel = ({
     toast.success("Layer deleted");
   };
 
+  const handleSelectPreset = (preset: GradientPreset) => {
+    onGradientColorsChange(preset.colors);
+    onGradientAngleChange(preset.angle);
+    toast.success(`Applied ${preset.name} preset`);
+  };
+
   return (
     <Card className="w-80 h-full border-l bg-panel p-4">
       <ScrollArea className="h-full">
         <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Gradient Presets
+            </h3>
+            <GradientPresets onSelectPreset={handleSelectPreset} />
+          </div>
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Settings className="w-4 h-4 text-primary" />
@@ -128,36 +248,41 @@ export const PropertiesPanel = ({
                     Add
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {gradientColors.map((color, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        type="color"
-                        value={color}
-                        onChange={(e) => handleColorChange(index, e.target.value)}
-                        className="w-12 h-8 p-1 cursor-pointer"
-                      />
-                      <Input
-                        type="text"
-                        value={color}
-                        onChange={(e) => handleColorChange(index, e.target.value)}
-                        className="flex-1 h-8 text-xs"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveColorStop(index)}
-                        className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
-                        disabled={gradientColors.length <= 2}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={gradientColors.map((_, index) => `color-${index}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {gradientColors.map((color, index) => (
+                        <SortableColorStop
+                          key={`color-${index}`}
+                          color={color}
+                          index={index}
+                          onColorChange={handleColorChange}
+                          onRemove={handleRemoveColorStop}
+                          disabled={gradientColors.length <= 2}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </div>
             </div>
           </div>
+
+          <ShapePropertyEditor
+            shape={selectedShape}
+            onShapeUpdate={(updates) => {
+              if (selectedShape) {
+                onShapeUpdate(selectedShape.id, updates);
+              }
+            }}
+          />
 
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -195,10 +320,12 @@ export const PropertiesPanel = ({
             </div>
           </div>
 
+          <VideoExport canvasRef={canvasRef} />
+
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
-              Export
+              Image Export
             </h3>
             <div className="space-y-2">
               <Button

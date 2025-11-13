@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef } from "react";
 import { Card } from "@/components/ui/card";
 
 export interface Shape {
@@ -21,8 +21,10 @@ interface CanvasProps {
   animationSpeed: number;
 }
 
-export const Canvas = ({ shapes, gradient, animationSpeed }: CanvasProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
+  ({ shapes, gradient, animationSpeed }, ref) => {
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = (ref as React.RefObject<HTMLCanvasElement>) || internalCanvasRef;
   const [animationFrame, setAnimationFrame] = useState(0);
 
   useEffect(() => {
@@ -104,9 +106,9 @@ export const Canvas = ({ shapes, gradient, animationSpeed }: CanvasProps) => {
           ref={canvasRef}
           width={1080}
           height={720}
-          className="max-w-full h-auto"
+      className="max-w-full h-auto"
         />
       </Card>
     </div>
   );
-};
+});
