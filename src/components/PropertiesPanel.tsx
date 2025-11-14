@@ -4,11 +4,8 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Download, Palette, Layers, Settings, Trash2, Plus, Sparkles, GripVertical } from "lucide-react";
+import { Download, Palette, Settings, Trash2, Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import type { Shape } from "./Canvas";
-import { GradientPresets, type GradientPreset } from "./GradientPresets";
-import { ShapePropertyEditor } from "./ShapePropertyEditor";
 import { VideoExport } from "./VideoExport";
 import {
   DndContext,
@@ -36,11 +33,6 @@ interface PropertiesPanelProps {
   gradientColors: string[];
   onGradientColorsChange: (colors: string[]) => void;
   onExport: (format: "png" | "jpeg") => void;
-  layers: Shape[];
-  selectedShape: Shape | null;
-  onLayerSelect: (id: string) => void;
-  onLayerDelete: (id: string) => void;
-  onShapeUpdate: (id: string, updates: Partial<Shape>) => void;
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }
 
@@ -116,11 +108,6 @@ export const PropertiesPanel = ({
   gradientColors,
   onGradientColorsChange,
   onExport,
-  layers,
-  selectedShape,
-  onLayerSelect,
-  onLayerDelete,
-  onShapeUpdate,
   canvasRef,
 }: PropertiesPanelProps) => {
   const sensors = useSensors(
@@ -134,12 +121,14 @@ export const PropertiesPanel = ({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = Number(active.id.toString().split("-")[1]);
-      const newIndex = Number(over.id.toString().split("-")[1]);
+      const oldIndex = gradientColors.indexOf(active.id as string);
+      const newIndex = gradientColors.indexOf(over.id as string);
+
       const newColors = arrayMove(gradientColors, oldIndex, newIndex);
       onGradientColorsChange(newColors);
     }
   };
+
   const handleExport = (format: "png" | "jpeg") => {
     onExport(format);
     toast.success(`Exported as ${format.toUpperCase()}`, {
@@ -169,28 +158,10 @@ export const PropertiesPanel = ({
     onGradientColorsChange(newColors);
   };
 
-  const handleDeleteLayer = (id: string) => {
-    onLayerDelete(id);
-    toast.success("Layer deleted");
-  };
-
-  const handleSelectPreset = (preset: GradientPreset) => {
-    onGradientColorsChange(preset.colors);
-    onGradientAngleChange(preset.angle);
-    toast.success(`Applied ${preset.name} preset`);
-  };
-
   return (
     <Card className="w-80 h-full border-l bg-panel p-4">
       <ScrollArea className="h-full">
         <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              Gradient Presets
-            </h3>
-            <GradientPresets onSelectPreset={handleSelectPreset} />
-          </div>
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Settings className="w-4 h-4 text-primary" />
@@ -254,7 +225,7 @@ export const PropertiesPanel = ({
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={gradientColors.map((_, index) => `color-${index}`)}
+                    items={gradientColors.map((_, i) => `color-${i}`)}
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="space-y-2">
@@ -275,72 +246,29 @@ export const PropertiesPanel = ({
             </div>
           </div>
 
-          <ShapePropertyEditor
-            shape={selectedShape}
-            onShapeUpdate={(updates) => {
-              if (selectedShape) {
-                onShapeUpdate(selectedShape.id, updates);
-              }
-            }}
-          />
-
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-primary" />
-              Layers ({layers.length})
-            </h3>
-            <div className="space-y-2">
-              {layers.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  No layers yet. Add shapes from the toolbar!
-                </p>
-              ) : (
-                layers.map((layer, index) => (
-                  <div key={layer.id} className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      className="flex-1 justify-start text-left hover:bg-panel-hover transition-colors"
-                      onClick={() => onLayerSelect(layer.id)}
-                    >
-                      <span className="text-xs">
-                        {layer.type.charAt(0).toUpperCase() + layer.type.slice(1)} {index + 1}
-                      </span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteLayer(layer.id)}
-                      className="h-9 w-9 p-0 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <VideoExport canvasRef={canvasRef} />
-
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
-              Image Export
+              Export
             </h3>
             <div className="space-y-2">
               <Button
+                variant="secondary"
+                className="w-full"
                 onClick={() => handleExport("png")}
-                className="w-full bg-primary hover:bg-primary/90 transition-colors"
               >
+                <Download className="w-4 h-4 mr-2" />
                 Export PNG
               </Button>
               <Button
-                onClick={() => handleExport("jpeg")}
                 variant="secondary"
-                className="w-full hover:bg-panel-hover transition-colors"
+                className="w-full"
+                onClick={() => handleExport("jpeg")}
               >
+                <Download className="w-4 h-4 mr-2" />
                 Export JPEG
               </Button>
+              <VideoExport canvasRef={canvasRef} />
             </div>
           </div>
         </div>
