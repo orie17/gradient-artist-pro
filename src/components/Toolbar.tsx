@@ -9,7 +9,7 @@ interface ToolbarProps {
 
 export const Toolbar = ({ onSelectPreset }: ToolbarProps) => {
   return (
-    <Card className="w-72 h-full border-r bg-panel p-4">
+    <Card className="w-72 h-full border-r bg-panel p-4 hidden md:block">
       <ScrollArea className="h-full">
         <div className="space-y-6">
           <div>
@@ -17,7 +17,9 @@ export const Toolbar = ({ onSelectPreset }: ToolbarProps) => {
               <Sparkles className="w-4 h-4 text-primary" />
               Gradient Presets
             </h3>
-            <GradientPresets onSelectPreset={onSelectPreset} />
+            <div className="min-h-[600px]">
+              <GradientPresets onSelectPreset={onSelectPreset} />
+            </div>
           </div>
         </div>
       </ScrollArea>
