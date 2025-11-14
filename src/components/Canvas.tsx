@@ -1,94 +1,157 @@
-import { useEffect, useRef, useState, forwardRef } from "react";
+import { useEffect, useRef, forwardRef } from "react";
 import { Card } from "@/components/ui/card";
 
 interface CanvasProps {
   gradient: {
     angle: number;
     colors: string[];
+    type: "linear" | "radial" | "conic";
+    animationType: "rotate" | "slide-horizontal" | "slide-vertical" | "pulse" | "wave" | "diagonal" | "zoom" | "color-shift";
+    speed: number;
+    direction: "forward" | "reverse" | "alternate";
   };
-  animationSpeed: number;
+  effects: {
+    blur: number;
+    noise: number;
+  };
+  canvasSize: { width: number; height: number };
 }
 
 export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ gradient, animationSpeed }, ref) => {
-  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
-  const canvasRef = (ref as React.RefObject<HTMLCanvasElement>) || internalCanvasRef;
-  const [animationFrame, setAnimationFrame] = useState(0);
-  const [dimensions, setDimensions] = useState({ width: 1080, height: 720 });
+  ({ gradient, effects, canvasSize }, ref) => {
+    const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasRef = (ref as React.RefObject<HTMLCanvasElement>) || internalCanvasRef;
+    const animationFrameRef = useRef<number>(0);
+    const animationIdRef = useRef<number>();
 
-  // Handle responsive canvas sizing
-  useEffect(() => {
-    const updateDimensions = () => {
-      const containerPadding = 64; // 8 * 2 for p-8
-      const sidebarWidth = 288 * 2; // w-72 * 2 for both sidebars
-      const headerHeight = 64;
-      
-      const availableWidth = window.innerWidth - sidebarWidth - containerPadding;
-      const availableHeight = window.innerHeight - headerHeight - containerPadding;
-      
-      // Maintain 16:10 aspect ratio
-      let width = Math.min(availableWidth, 1080);
-      let height = Math.min(availableHeight, 720);
-      
-      // Adjust to maintain aspect ratio
-      const aspectRatio = 1080 / 720;
-      if (width / height > aspectRatio) {
-        width = height * aspectRatio;
-      } else {
-        height = width / aspectRatio;
-      }
-      
-      setDimensions({ width: Math.floor(width), height: Math.floor(height) });
-    };
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) return;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      let startTime = Date.now();
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const animate = () => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speedMultiplier = gradient.speed;
+        const time = elapsed * speedMultiplier;
 
-    const animate = () => {
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw animated gradient background
-      const angleRad = ((gradient.angle + animationFrame * animationSpeed * 0.1) * Math.PI) / 180;
-      const x1 = canvas.width / 2 - Math.cos(angleRad) * canvas.width / 2;
-      const y1 = canvas.height / 2 - Math.sin(angleRad) * canvas.height / 2;
-      const x2 = canvas.width / 2 + Math.cos(angleRad) * canvas.width / 2;
-      const y2 = canvas.height / 2 + Math.sin(angleRad) * canvas.height / 2;
+        // Create gradient based on type and animation
+        let grad: CanvasGradient;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
 
-      const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-      gradient.colors.forEach((color, index) => {
-        grad.addColorStop(index / (gradient.colors.length - 1), color);
-      });
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (gradient.type === "radial") {
+          const maxRadius = Math.max(canvas.width, canvas.height);
+          let radius = maxRadius / 2;
+          
+          if (gradient.animationType === "pulse" || gradient.animationType === "zoom") {
+            radius = maxRadius / 2 + Math.sin(time) * maxRadius / 6;
+          }
+          
+          grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+        } else if (gradient.type === "conic") {
+          const startAngle = gradient.animationType === "rotate" 
+            ? time 
+            : (gradient.angle * Math.PI) / 180;
+          
+          grad = ctx.createConicGradient(startAngle, centerX, centerY);
+        } else {
+          // Linear gradient
+          let angleRad = (gradient.angle * Math.PI) / 180;
+          
+          if (gradient.animationType === "rotate") {
+            angleRad += time * 0.5;
+          } else if (gradient.animationType === "slide-horizontal") {
+            const offset = (time % 2) * canvas.width;
+            angleRad = 0;
+          } else if (gradient.animationType === "slide-vertical") {
+            const offset = (time % 2) * canvas.height;
+            angleRad = Math.PI / 2;
+          } else if (gradient.animationType === "diagonal") {
+            angleRad = Math.PI / 4 + time * 0.3;
+          } else if (gradient.animationType === "wave") {
+            angleRad += Math.sin(time) * 0.5;
+          }
 
-      setAnimationFrame((prev) => prev + 1);
-    };
+          const x1 = centerX - Math.cos(angleRad) * canvas.width / 2;
+          const y1 = centerY - Math.sin(angleRad) * canvas.height / 2;
+          const x2 = centerX + Math.cos(angleRad) * canvas.width / 2;
+          const y2 = centerY + Math.sin(angleRad) * canvas.height / 2;
 
-    const interval = setInterval(animate, 1000 / 60); // 60 FPS
+          grad = ctx.createLinearGradient(x1, y1, x2, y2);
+        }
 
-    return () => clearInterval(interval);
-  }, [gradient, animationSpeed, animationFrame, dimensions]);
+        // Add color stops with potential color shifting
+        gradient.colors.forEach((color, index) => {
+          let position = index / (gradient.colors.length - 1);
+          
+          if (gradient.animationType === "color-shift") {
+            position = (position + time * 0.1) % 1;
+          }
+          
+          grad.addColorStop(position, color);
+        });
 
-  return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <Card className="bg-panel border-border overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          width={dimensions.width}
-          height={dimensions.height}
-          className="max-w-full h-auto"
-        />
-      </Card>
-    </div>
-  );
-});
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Apply effects
+        if (effects.blur > 0) {
+          ctx.filter = `blur(${effects.blur}px)`;
+          ctx.drawImage(canvas, 0, 0);
+          ctx.filter = "none";
+        }
+
+        if (effects.noise > 0) {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          const noiseAmount = effects.noise * 255;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * noiseAmount;
+            data[i] += noise;
+            data[i + 1] += noise;
+            data[i + 2] += noise;
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+        }
+
+        animationIdRef.current = requestAnimationFrame(animate);
+      };
+
+      animate();
+
+      return () => {
+        if (animationIdRef.current) {
+          cancelAnimationFrame(animationIdRef.current);
+        }
+      };
+    }, [gradient, effects, canvasSize]);
+
+    return (
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
+        <Card className="bg-panel border-border overflow-hidden w-full max-w-full">
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            className="max-w-full h-auto mx-auto"
+            style={{ 
+              display: 'block',
+              willChange: 'transform',
+            }}
+          />
+        </Card>
+      </div>
+    );
+  }
+);
+
+Canvas.displayName = "Canvas";
