@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive Typography with CSS Clamp */
+:root {
+  --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --font-size-sm: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  --font-size-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --font-size-lg: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --font-size-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 2rem);
+  --font-size-3xl: clamp(1.875rem, 1.65rem + 1.125vw, 2.5rem);
+  --font-size-4xl: clamp(2.25rem, 1.95rem + 1.5vw, 3rem);
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -52,6 +64,52 @@ All colors MUST be HSL.
     --success: 142 71% 45%;
     --success-foreground: 210 40% 98%;
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 263 70% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 280 70% 60%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 263 70% 50%;
+
+    --radius: 0.5rem;
+
+    /* Gradient colors for the tool */
+    --gradient-1: 330 80% 55%;
+    --gradient-2: 280 80% 55%;
+    --gradient-3: 200 80% 50%;
+    --gradient-4: 160 70% 45%;
+
+    /* Panel backgrounds */
+    --panel: 210 40% 98%;
+    --panel-hover: 210 40% 96%;
+
+    /* Success color */
+    --success: 142 71% 45%;
+    --success-foreground: 210 40% 98%;
+  }
 }
 
 @layer base {
@@ -61,5 +119,38 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Responsive Typography Utilities */
+  .text-responsive-xs {
+    font-size: var(--font-size-xs);
+  }
+
+  .text-responsive-sm {
+    font-size: var(--font-size-sm);
+  }
+
+  .text-responsive-base {
+    font-size: var(--font-size-base);
+  }
+
+  .text-responsive-lg {
+    font-size: var(--font-size-lg);
+  }
+
+  .text-responsive-xl {
+    font-size: var(--font-size-xl);
+  }
+
+  .text-responsive-2xl {
+    font-size: var(--font-size-2xl);
+  }
+
+  .text-responsive-3xl {
+    font-size: var(--font-size-3xl);
+  }
+
+  .text-responsive-4xl {
+    font-size: var(--font-size-4xl);
   }
 }

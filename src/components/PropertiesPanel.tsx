@@ -119,13 +119,6 @@ const SortableColorStop = ({
   );
 };
 
-const canvasSizePresets = [
-  { name: "Full HD", width: 1920, height: 1080 },
-  { name: "Square", width: 1080, height: 1080 },
-  { name: "Portrait", width: 1080, height: 1920 },
-  { name: "HD", width: 1280, height: 720 },
-];
-
 export const PropertiesPanel = ({
   gradient,
   effects,
@@ -185,37 +178,9 @@ export const PropertiesPanel = ({
   };
 
   return (
-    <Card className="w-full md:w-80 h-full border-l bg-panel p-4">
+    <Card className="w-full lg:w-80 h-full border-l-0 lg:border-l bg-panel p-4">
       <ScrollArea className="h-full">
         <div className="space-y-6">
-          {/* Canvas Size Presets */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Maximize2 className="w-4 h-4 text-primary" />
-              Canvas Size
-            </h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                {canvasSizePresets.map((preset) => (
-                  <Button
-                    key={preset.name}
-                    variant={canvasSize.width === preset.width && canvasSize.height === preset.height ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onCanvasSizeChange(preset)}
-                    className="text-xs min-h-[44px]"
-                  >
-                    {preset.name}
-                    <br />
-                    <span className="text-xs opacity-70">{preset.width}×{preset.height}</span>
-                  </Button>
-                ))}
-              </div>
-              <div className="flex gap-2 items-center text-xs text-muted-foreground">
-                <span>Current: {canvasSize.width} × {canvasSize.height}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Animation Style */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
