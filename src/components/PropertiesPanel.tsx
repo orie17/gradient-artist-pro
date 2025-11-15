@@ -8,6 +8,7 @@ import { Download, Palette, Settings, Trash2, Plus, GripVertical, Maximize2, Spa
 import { toast } from "sonner";
 import { VideoExport } from "./VideoExport";
 import { GradientLibrary } from "./GradientLibrary";
+import { ColorPaletteGenerator } from "./ColorPaletteGenerator";
 import {
   Select,
   SelectContent,
@@ -356,6 +357,14 @@ export const PropertiesPanel = ({
                   </SortableContext>
                 </DndContext>
               </div>
+
+              {/* Color Palette Generator */}
+              <div className="pt-4 border-t border-border">
+                <ColorPaletteGenerator
+                  baseColor={gradient.colors[0]}
+                  onApplyPalette={(colors) => onGradientChange({ ...gradient, colors })}
+                />
+              </div>
             </div>
           </div>
 
@@ -417,6 +426,7 @@ export const PropertiesPanel = ({
                 });
                 toast.success(`Loaded "${saved.name}"`);
               }}
+              onSave={() => {}}
             />
           </div>
 
