@@ -8,6 +8,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Sparkles } from "lucide-react";
 import { GradientPresets } from "@/components/GradientPresets";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { toast } from "sonner";
 
 const Index = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,16 +26,75 @@ const Index = () => {
     noise: 0,
   });
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 });
+  const [history, setHistory] = useState<typeof gradient[]>([gradient]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+
+  const addToHistory = (newGradient: typeof gradient) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newGradient);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
 
   const handleSelectPreset = (preset: GradientPreset) => {
-    setGradient({
+    const newGradient = {
       ...gradient,
       colors: preset.colors,
       angle: preset.angle,
       animationType: preset.animationType,
       speed: preset.speed,
-    });
+    };
+    setGradient(newGradient);
+    addToHistory(newGradient);
+    setMobileSheetOpen(false);
   };
+
+  const handleGradientChange = (newGradient: typeof gradient) => {
+    setGradient(newGradient);
+    addToHistory(newGradient);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setGradient(history[newIndex]);
+      toast.success("Undo");
+    } else {
+      toast.error("Nothing to undo");
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setGradient(history[newIndex]);
+      toast.success("Redo");
+    } else {
+      toast.error("Nothing to redo");
+    }
+  };
+
+  const handleSaveShortcut = () => {
+    toast.info("Opening save dialog...");
+  };
+
+  const handleAnimationTypeChange = (type: string) => {
+    const newGradient = { ...gradient, animationType: type as any };
+    setGradient(newGradient);
+    addToHistory(newGradient);
+    toast.success(`Animation: ${type}`);
+  };
+
+  useKeyboardShortcuts({
+    onExport: () => handleExport("png"),
+    onSave: handleSaveShortcut,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onAnimationType: handleAnimationTypeChange,
+  });
 
   const handleExport = (format: "png" | "jpeg") => {
     const canvas = canvasRef.current;
@@ -51,7 +112,7 @@ const Index = () => {
       
       {/* Mobile Preset Sheet */}
       <div className="md:hidden fixed bottom-4 left-4 z-50">
-        <Sheet>
+        <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
           <SheetTrigger asChild>
             <Button size="lg" className="rounded-full shadow-lg min-h-[56px] min-w-[56px]">
               <Sparkles className="w-5 h-5" />
@@ -93,7 +154,7 @@ const Index = () => {
                   gradient={gradient}
                   effects={effects}
                   canvasSize={canvasSize}
-                  onGradientChange={setGradient}
+                  onGradientChange={handleGradientChange}
                   onEffectsChange={setEffects}
                   onCanvasSizeChange={setCanvasSize}
                   onExport={handleExport}
@@ -108,7 +169,7 @@ const Index = () => {
             gradient={gradient}
             effects={effects}
             canvasSize={canvasSize}
-            onGradientChange={setGradient}
+            onGradientChange={handleGradientChange}
             onEffectsChange={setEffects}
             onCanvasSizeChange={setCanvasSize}
             onExport={handleExport}
