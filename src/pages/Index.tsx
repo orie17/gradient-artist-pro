@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { Canvas } from "@/components/Canvas";
 import { PropertiesPanel } from "@/components/PropertiesPanel";
-import { GradientPreset } from "@/components/GradientPresets";
-import { AppSidebar } from "@/components/AppSidebar";
+import { GradientPresets, GradientPreset } from "@/components/GradientPresets";
+import { SocialMediaExport } from "@/components/SocialMediaExport";
+import { CodeExport } from "@/components/CodeExport";
+import { GradientRandomizer } from "@/components/GradientRandomizer";
 import { BackToTop } from "@/components/BackToTop";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
@@ -18,6 +19,7 @@ const Index = () => {
     animationType: "rotate" as "rotate" | "slide-horizontal" | "slide-vertical" | "pulse" | "wave" | "diagonal" | "zoom" | "color-shift",
     speed: 1,
     direction: "forward" as "forward" | "reverse" | "alternate",
+    easing: "linear" as "linear" | "ease-in" | "ease-out" | "ease-in-out",
   });
   const [effects, setEffects] = useState({
     blur: 0,
@@ -103,19 +105,29 @@ const Index = () => {
   });
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header />
-        
-        <div className="flex flex-1 w-full overflow-hidden">
-          <AppSidebar
-            onSelectPreset={handleSelectPreset}
-            onCanvasSizeChange={setCanvasSize}
+    <div className="min-h-screen flex flex-col w-full bg-background">
+      <Header />
+      
+      <div className="flex flex-1 w-full overflow-hidden">
+        {/* Left Sidebar - Animation Controls */}
+        <aside className="hidden lg:block w-80 border-r border-border bg-panel overflow-auto">
+          <PropertiesPanel
+            gradient={gradient}
+            effects={effects}
             canvasSize={canvasSize}
+            onGradientChange={handleGradientChange}
+            onEffectsChange={setEffects}
+            onCanvasSizeChange={setCanvasSize}
+            onExport={handleExport}
+            canvasRef={canvasRef}
           />
+        </aside>
 
-          <main className="flex-1 flex flex-col lg:flex-row overflow-auto">
-            <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          {/* Sticky Canvas Section */}
+          <div className="sticky top-0 z-10 bg-background border-b border-border p-4 lg:p-8">
+            <div className="flex items-center justify-center">
               <Canvas
                 ref={canvasRef}
                 gradient={gradient}
@@ -123,8 +135,12 @@ const Index = () => {
                 canvasSize={canvasSize}
               />
             </div>
+          </div>
 
-            <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border bg-panel">
+          {/* Scrollable Content */}
+          <div className="p-4 lg:p-8 space-y-8">
+            {/* Mobile Properties Panel */}
+            <div className="lg:hidden">
               <PropertiesPanel
                 gradient={gradient}
                 effects={effects}
@@ -135,13 +151,34 @@ const Index = () => {
                 onExport={handleExport}
                 canvasRef={canvasRef}
               />
-            </aside>
-          </main>
-        </div>
+            </div>
 
-        <BackToTop />
+            {/* Gradient Presets */}
+            <section>
+              <h2 className="text-[clamp(1.5rem,4vw,2rem)] font-bold mb-4">Gradient Presets</h2>
+              <GradientPresets onSelectPreset={handleSelectPreset} />
+            </section>
+
+            {/* Social Media Export */}
+            <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
+
+            {/* Code Export */}
+            <CodeExport gradient={gradient} />
+
+            {/* Smart Randomizer */}
+            <GradientRandomizer
+              onApplyGradient={(colors) => {
+                const newGradient = { ...gradient, colors };
+                handleGradientChange(newGradient);
+              }}
+              currentColors={gradient.colors}
+            />
+          </div>
+        </main>
       </div>
-    </SidebarProvider>
+
+      <BackToTop />
+    </div>
   );
 };
 

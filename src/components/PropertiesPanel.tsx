@@ -42,6 +42,7 @@ interface PropertiesPanelProps {
     animationType: "rotate" | "slide-horizontal" | "slide-vertical" | "pulse" | "wave" | "diagonal" | "zoom" | "color-shift";
     speed: number;
     direction: "forward" | "reverse" | "alternate";
+    easing?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
   };
   effects: {
     blur: number;
@@ -238,6 +239,33 @@ export const PropertiesPanel = ({
                     <SelectItem value="forward">Forward</SelectItem>
                     <SelectItem value="reverse">Reverse</SelectItem>
                     <SelectItem value="alternate">Alternate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Gradient Easing */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              Gradient Easing
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Easing Function</Label>
+                <Select
+                  value={gradient.easing || "linear"}
+                  onValueChange={(value: any) => onGradientChange({ ...gradient, easing: value })}
+                >
+                  <SelectTrigger className="mt-2 min-h-[44px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="linear">Linear</SelectItem>
+                    <SelectItem value="ease-in">Ease In</SelectItem>
+                    <SelectItem value="ease-out">Ease Out</SelectItem>
+                    <SelectItem value="ease-in-out">Ease In-Out</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
