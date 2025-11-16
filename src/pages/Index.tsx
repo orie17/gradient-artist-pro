@@ -108,9 +108,9 @@ const Index = () => {
     <div className="min-h-screen flex flex-col w-full bg-background">
       <Header />
       
-      <div className="flex flex-1 w-full overflow-hidden">
+      <div className="flex flex-1 w-full">
         {/* Left Sidebar - Animation Controls */}
-        <aside className="hidden lg:block w-80 border-r border-border bg-panel overflow-auto">
+        <aside className="hidden lg:block w-80 border-r border-border bg-panel fixed left-0 top-16 bottom-0 overflow-y-auto">
           <PropertiesPanel
             gradient={gradient}
             effects={effects}
@@ -124,7 +124,7 @@ const Index = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto lg:ml-80">
           {/* Sticky Canvas Section */}
           <div className="sticky top-0 z-10 bg-background border-b border-border p-4 lg:p-8">
             <div className="flex items-center justify-center">
