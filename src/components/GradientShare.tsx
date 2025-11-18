@@ -47,30 +47,32 @@ export const GradientShare = ({ gradient }: GradientShareProps) => {
   const shareUrl = generateShareUrl();
 
   return (
-    <section>
-      <div className="flex items-center gap-2 mb-4">
-        <Share2 className="w-5 h-5 text-primary" />
-        <h2 className="text-[clamp(1.5rem,4vw,2rem)] font-bold">Share Gradient</h2>
+    <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="col-span-2 md:col-span-3 lg:col-span-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Share2 className="w-5 h-5 text-primary" />
+          <h2 className="text-[clamp(1.5rem,4vw,2rem)] font-bold">Share Gradient</h2>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={shareUrl}
+            readOnly
+            className="flex-1 bg-panel border-border"
+            onClick={(e) => e.currentTarget.select()}
+          />
+          <Button
+            onClick={handleCopy}
+            variant="default"
+            size="icon"
+            className="flex-shrink-0"
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">
+          Share this link to let others use your gradient configuration
+        </p>
       </div>
-      <div className="flex gap-2">
-        <Input
-          value={shareUrl}
-          readOnly
-          className="flex-1 bg-panel border-border"
-          onClick={(e) => e.currentTarget.select()}
-        />
-        <Button
-          onClick={handleCopy}
-          variant="default"
-          size="icon"
-          className="flex-shrink-0"
-        >
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-        </Button>
-      </div>
-      <p className="text-sm text-muted-foreground mt-2">
-        Share this link to let others use your gradient configuration
-      </p>
     </section>
   );
 };

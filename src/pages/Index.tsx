@@ -10,6 +10,9 @@ import { GradientHistory } from "@/components/GradientHistory";
 import { GradientShare } from "@/components/GradientShare";
 import { ColorExtractor } from "@/components/ColorExtractor";
 import { BackToTop } from "@/components/BackToTop";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { AnimationPresets, AnimationPreset } from "@/components/AnimationPresets";
+import { ColorHarmonyAnalyzer } from "@/components/ColorHarmonyAnalyzer";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
@@ -48,6 +51,7 @@ const Index = () => {
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 });
   const [history, setHistory] = useState<typeof gradient[]>([getInitialGradient()]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   useEffect(() => {
     if (window.location.search) {
@@ -128,12 +132,25 @@ const Index = () => {
     toast.success("Loaded from history");
   };
 
+  const handleApplyAnimationPreset = (preset: AnimationPreset) => {
+    const newGradient = {
+      ...gradient,
+      animationType: preset.animationType,
+      speed: preset.speed,
+      direction: preset.direction,
+      easing: preset.easing,
+    };
+    setGradient(newGradient);
+    addToHistory(newGradient);
+  };
+
   useKeyboardShortcuts({
     onExport: () => handleExport("png"),
     onSave: handleSaveShortcut,
     onUndo: handleUndo,
     onRedo: handleRedo,
     onAnimationType: handleAnimationTypeChange,
+    onShowHelp: () => setShowKeyboardHelp(true),
   });
 
   const getSavedGradients = () => {
@@ -198,7 +215,15 @@ const Index = () => {
               />
             </div>
 
-            {/* Gradient History */}
+            {/* Color Extractor - Above Canvas */}
+            <ColorExtractor
+              onApplyColors={(colors) => {
+                const newGradient = { ...gradient, colors };
+                handleGradientChange(newGradient);
+              }}
+            />
+
+            {/* Gradient History - Right after canvas */}
             <GradientHistory
               history={history}
               currentIndex={historyIndex}
@@ -211,14 +236,17 @@ const Index = () => {
               <GradientPresets onSelectPreset={handleSelectPreset} />
             </section>
 
-            {/* Gradient Share */}
-            <GradientShare gradient={gradient} />
+            {/* Animation Presets */}
+            <AnimationPresets onApplyPreset={handleApplyAnimationPreset} />
 
-            {/* Social Media Export */}
-            <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
-
-            {/* Code Export */}
-            <CodeExport gradient={gradient} />
+            {/* Color Harmony Analyzer */}
+            <ColorHarmonyAnalyzer
+              colors={gradient.colors}
+              onApplySuggestion={(colors) => {
+                const newGradient = { ...gradient, colors };
+                handleGradientChange(newGradient);
+              }}
+            />
 
             {/* Smart Randomizer */}
             <GradientRandomizer
@@ -229,18 +257,20 @@ const Index = () => {
               currentColors={gradient.colors}
             />
 
-            {/* Color Extractor */}
-            <ColorExtractor
-              onApplyColors={(colors) => {
-                const newGradient = { ...gradient, colors };
-                handleGradientChange(newGradient);
-              }}
-            />
+            {/* Code Export */}
+            <CodeExport gradient={gradient} />
+
+            {/* Gradient Share */}
+            <GradientShare gradient={gradient} />
+
+            {/* Social Media Export */}
+            <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
           </div>
         </main>
       </div>
 
       <BackToTop />
+      <KeyboardShortcutsHelp open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
     </div>
   );
 };

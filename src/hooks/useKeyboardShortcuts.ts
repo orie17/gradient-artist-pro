@@ -6,6 +6,7 @@ interface KeyboardShortcutsProps {
   onUndo: () => void;
   onRedo: () => void;
   onAnimationType: (type: string) => void;
+  onShowHelp?: () => void;
 }
 
 export const useKeyboardShortcuts = ({
@@ -14,6 +15,7 @@ export const useKeyboardShortcuts = ({
   onUndo,
   onRedo,
   onAnimationType,
+  onShowHelp,
 }: KeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,6 +50,13 @@ export const useKeyboardShortcuts = ({
         return;
       }
 
+      // ? key for help (only if not in input)
+      if (e.key === "?" && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        onShowHelp?.();
+        return;
+      }
+
       // Number keys 1-8 for animation types (only if not in input)
       if (
         e.target instanceof HTMLInputElement ||
@@ -76,5 +85,5 @@ export const useKeyboardShortcuts = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onExport, onSave, onUndo, onRedo, onAnimationType]);
+  }, [onExport, onSave, onUndo, onRedo, onAnimationType, onShowHelp]);
 };
