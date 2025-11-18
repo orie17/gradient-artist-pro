@@ -8,6 +8,7 @@ import { CodeExport } from "@/components/CodeExport";
 import { GradientRandomizer } from "@/components/GradientRandomizer";
 import { GradientHistory } from "@/components/GradientHistory";
 import { GradientShare } from "@/components/GradientShare";
+import { ColorExtractor } from "@/components/ColorExtractor";
 import { BackToTop } from "@/components/BackToTop";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
@@ -135,9 +136,22 @@ const Index = () => {
     onAnimationType: handleAnimationTypeChange,
   });
 
+  const getSavedGradients = () => {
+    try {
+      const saved = localStorage.getItem('gradientLibrary');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header />
+      <Header 
+        currentGradient={gradient}
+        history={history}
+        savedGradients={getSavedGradients()}
+      />
       
       <div className="flex flex-1 w-full">
         {/* Left Sidebar - Animation Controls */}
@@ -213,6 +227,14 @@ const Index = () => {
                 handleGradientChange(newGradient);
               }}
               currentColors={gradient.colors}
+            />
+
+            {/* Color Extractor */}
+            <ColorExtractor
+              onApplyColors={(colors) => {
+                const newGradient = { ...gradient, colors };
+                handleGradientChange(newGradient);
+              }}
             />
           </div>
         </main>
