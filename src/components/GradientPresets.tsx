@@ -1,4 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { useState } from "react";
 
 export interface GradientPreset {
   name: string;
@@ -26,9 +29,36 @@ interface GradientPresetsProps {
 }
 
 export const GradientPresets = ({ onSelectPreset }: GradientPresetsProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredPresets = gradientPresets.filter((preset) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      preset.name.toLowerCase().includes(searchLower) ||
+      preset.animationType.toLowerCase().includes(searchLower) ||
+      preset.colors.some((color) => color.toLowerCase().includes(searchLower))
+    );
+  });
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {gradientPresets.map((preset) => {
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search presets by name, animation, or color..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 bg-panel border-border"
+        />
+      </div>
+      {filteredPresets.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No presets found matching "{searchQuery}"
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredPresets.map((preset) => {
         return (
           <button
             key={preset.name}
@@ -50,6 +80,8 @@ export const GradientPresets = ({ onSelectPreset }: GradientPresetsProps) => {
           </button>
         );
       })}
+        </div>
+      )}
     </div>
   );
 };
