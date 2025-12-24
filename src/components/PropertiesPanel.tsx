@@ -4,11 +4,17 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Download, Palette, Settings, Trash2, Plus, GripVertical, Maximize2, Sparkles, Save } from "lucide-react";
+import { Download, Palette, Settings, Trash2, Plus, GripVertical, Sparkles, Save } from "lucide-react";
 import { toast } from "sonner";
 import { VideoExport } from "./VideoExport";
 import { GradientLibrary } from "./GradientLibrary";
 import { ColorPaletteGenerator } from "./ColorPaletteGenerator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -99,19 +105,19 @@ const SortableColorStop = ({
         type="color"
         value={color}
         onChange={(e) => onColorChange(index, e.target.value)}
-        className="w-12 h-10 p-1 cursor-pointer"
+        className="w-10 h-10 p-1 cursor-pointer"
       />
       <Input
         type="text"
         value={color}
         onChange={(e) => onColorChange(index, e.target.value)}
-        className="flex-1 h-10 text-xs"
+        className="flex-1 h-10 text-xs font-mono"
       />
       <Button
         size="sm"
         variant="ghost"
         onClick={() => onRemove(index)}
-        className="h-10 w-10 p-0 hover:bg-destructive/20 hover:text-destructive min-w-[44px] min-h-[44px]"
+        className="h-10 w-10 p-0 hover:bg-destructive/20 hover:text-destructive min-w-[40px]"
         disabled={disabled}
       >
         <Trash2 className="w-4 h-4" />
@@ -179,23 +185,23 @@ export const PropertiesPanel = ({
   };
 
   return (
-    <Card className="w-full lg:w-80 h-full border-l-0 lg:border-l bg-panel p-4">
+    <Card className="w-full lg:w-72 h-full border-0 lg:border-l bg-panel p-4">
       <ScrollArea className="h-full">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Animation Style */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <Sparkles className="w-4 h-4 text-primary" />
               Animation Style
             </h3>
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-muted-foreground">Animation Type</Label>
+                <Label className="text-xs text-muted-foreground">Type</Label>
                 <Select
                   value={gradient.animationType}
                   onValueChange={(value: any) => onGradientChange({ ...gradient, animationType: value })}
                 >
-                  <SelectTrigger className="mt-2 min-h-[44px]">
+                  <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
@@ -212,7 +218,7 @@ export const PropertiesPanel = ({
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">Loop Speed</Label>
+                <Label className="text-xs text-muted-foreground">Animation Speed</Label>
                 <Slider
                   value={[gradient.speed]}
                   onValueChange={([value]) => onGradientChange({ ...gradient, speed: value })}
@@ -221,8 +227,9 @@ export const PropertiesPanel = ({
                   step={0.1}
                   className="mt-2"
                 />
-                <div className="text-xs text-muted-foreground mt-1 text-right">
-                  {gradient.speed.toFixed(1)}x
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Higher = faster</span>
+                  <span>{gradient.speed.toFixed(1)}x</span>
                 </div>
               </div>
 
@@ -232,7 +239,7 @@ export const PropertiesPanel = ({
                   value={gradient.direction}
                   onValueChange={(value: any) => onGradientChange({ ...gradient, direction: value })}
                 >
-                  <SelectTrigger className="mt-2 min-h-[44px]">
+                  <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
@@ -242,23 +249,23 @@ export const PropertiesPanel = ({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </div>
 
-          {/* Gradient Easing */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-primary" />
-              Gradient Easing
-            </h3>
-            <div className="space-y-4">
               <div>
-                <Label className="text-xs text-muted-foreground">Easing Function</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label className="text-xs text-muted-foreground cursor-help">Easing</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Controls how animation speeds up and slows down</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Select
                   value={gradient.easing || "linear"}
                   onValueChange={(value: any) => onGradientChange({ ...gradient, easing: value })}
                 >
-                  <SelectTrigger className="mt-2 min-h-[44px]">
+                  <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
@@ -273,19 +280,19 @@ export const PropertiesPanel = ({
           </div>
 
           {/* Gradient Builder */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <Palette className="w-4 h-4 text-primary" />
               Gradient Builder
             </h3>
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-muted-foreground">Gradient Type</Label>
+                <Label className="text-xs text-muted-foreground">Style</Label>
                 <Select
                   value={gradient.type}
                   onValueChange={(value: any) => onGradientChange({ ...gradient, type: value })}
                 >
-                  <SelectTrigger className="mt-2 min-h-[44px]">
+                  <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
@@ -298,7 +305,7 @@ export const PropertiesPanel = ({
 
               {gradient.type === "linear" && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Angle</Label>
+                  <Label className="text-xs text-muted-foreground">Direction</Label>
                   <Slider
                     value={[gradient.angle]}
                     onValueChange={([value]) => onGradientChange({ ...gradient, angle: value })}
@@ -318,11 +325,11 @@ export const PropertiesPanel = ({
                   <Label className="text-xs text-muted-foreground">Color Stops</Label>
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     onClick={handleAddColorStop}
-                    className="h-8 px-2 min-h-[44px]"
+                    className="h-7 px-2 text-xs"
                   >
-                    <Plus className="w-4 h-4 mr-1" />
+                    <Plus className="w-3 h-3 mr-1" />
                     Add
                   </Button>
                 </div>
@@ -362,8 +369,8 @@ export const PropertiesPanel = ({
           </div>
 
           {/* Effects */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <Settings className="w-4 h-4 text-primary" />
               Effects
             </h3>
@@ -401,8 +408,8 @@ export const PropertiesPanel = ({
           </div>
 
           {/* Gradient Library */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <Save className="w-4 h-4 text-primary" />
               Gradient Library
             </h3>
@@ -424,15 +431,14 @@ export const PropertiesPanel = ({
           </div>
 
           {/* Export */}
-          <div>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <Download className="w-4 h-4 text-primary" />
               Export
             </h3>
             <div className="space-y-2">
               <Button
-                variant="secondary"
-                className="w-full min-h-[44px]"
+                className="w-full"
                 onClick={() => handleExport("png")}
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -440,7 +446,7 @@ export const PropertiesPanel = ({
               </Button>
               <Button
                 variant="secondary"
-                className="w-full min-h-[44px]"
+                className="w-full"
                 onClick={() => handleExport("jpeg")}
               >
                 <Download className="w-4 h-4 mr-2" />

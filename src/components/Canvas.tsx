@@ -1,5 +1,6 @@
 import { useEffect, useRef, forwardRef } from "react";
 import { Card } from "@/components/ui/card";
+import { ContrastHelper } from "./ContrastHelper";
 
 interface CanvasProps {
   gradient: {
@@ -15,13 +16,13 @@ interface CanvasProps {
     noise: number;
   };
   canvasSize: { width: number; height: number };
+  reduceMotion?: boolean;
 }
 
 export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
-  ({ gradient, effects, canvasSize }, ref) => {
+  ({ gradient, effects, canvasSize, reduceMotion = false }, ref) => {
     const internalCanvasRef = useRef<HTMLCanvasElement>(null);
     const canvasRef = (ref as React.RefObject<HTMLCanvasElement>) || internalCanvasRef;
-    const animationFrameRef = useRef<number>(0);
     const animationIdRef = useRef<number>();
 
     useEffect(() => {
@@ -35,7 +36,8 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
 
       const animate = () => {
         const elapsed = (Date.now() - startTime) / 1000;
-        const speedMultiplier = gradient.speed;
+        // Reduce motion: slow down to 0.1x speed
+        const speedMultiplier = reduceMotion ? gradient.speed * 0.1 : gradient.speed;
         const time = elapsed * speedMultiplier;
 
         // Clear canvas
@@ -68,10 +70,8 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           if (gradient.animationType === "rotate") {
             angleRad += time * 0.5;
           } else if (gradient.animationType === "slide-horizontal") {
-            const offset = (time % 2) * canvas.width;
             angleRad = 0;
           } else if (gradient.animationType === "slide-vertical") {
-            const offset = (time % 2) * canvas.height;
             angleRad = Math.PI / 2;
           } else if (gradient.animationType === "diagonal") {
             angleRad = Math.PI / 4 + time * 0.3;
@@ -133,10 +133,10 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
           cancelAnimationFrame(animationIdRef.current);
         }
       };
-    }, [gradient, effects, canvasSize]);
+    }, [gradient, effects, canvasSize, reduceMotion]);
 
     return (
-      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-3">
         <Card className="bg-panel border-border overflow-hidden w-full max-w-full">
           <canvas
             ref={canvasRef}
@@ -149,6 +149,7 @@ export const Canvas = forwardRef<HTMLCanvasElement, CanvasProps>(
             }}
           />
         </Card>
+        <ContrastHelper colors={gradient.colors} />
       </div>
     );
   }
