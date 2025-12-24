@@ -26,6 +26,55 @@ export const CodeExport = ({ gradient }: CodeExportProps) => {
     }
   };
 
+  const generateTailwind = () => {
+    const colorStops = gradient.colors.map((color, i) => {
+      if (i === 0) return `from-[${color}]`;
+      if (i === gradient.colors.length - 1) return `to-[${color}]`;
+      return `via-[${color}]`;
+    }).join(" ");
+    
+    if (gradient.type === "linear") {
+      const directions: Record<number, string> = {
+        0: "bg-gradient-to-t",
+        45: "bg-gradient-to-tr",
+        90: "bg-gradient-to-r",
+        135: "bg-gradient-to-br",
+        180: "bg-gradient-to-b",
+        225: "bg-gradient-to-bl",
+        270: "bg-gradient-to-l",
+        315: "bg-gradient-to-tl",
+      };
+      const closest = Object.keys(directions).reduce((prev, curr) => 
+        Math.abs(parseInt(curr) - gradient.angle) < Math.abs(parseInt(prev) - gradient.angle) ? curr : prev
+      );
+      return `className="${directions[parseInt(closest)]} ${colorStops}"`;
+    } else if (gradient.type === "radial") {
+      return `className="bg-[radial-gradient(circle,${gradient.colors.join(",")})]"`;
+    } else {
+      return `className="bg-[conic-gradient(from_${gradient.angle}deg,${gradient.colors.join(",")})]"`;
+    }
+  };
+
+  const generateReact = () => {
+    const cssValue = gradient.type === "linear"
+      ? `linear-gradient(${gradient.angle}deg, ${gradient.colors.join(", ")})`
+      : gradient.type === "radial"
+      ? `radial-gradient(circle, ${gradient.colors.join(", ")})`
+      : `conic-gradient(from ${gradient.angle}deg, ${gradient.colors.join(", ")})`;
+
+    return `const GradientBackground = () => {
+  return (
+    <div
+      style={{
+        background: '${cssValue}',
+        width: '100%',
+        height: '100vh',
+      }}
+    />
+  );
+};`;
+  };
+
   const generateSVG = () => {
     const stops = gradient.colors
       .map((color, i) => {
@@ -102,75 +151,80 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);`;
   const handleCopy = (code: string, tab: string) => {
     navigator.clipboard.writeText(code);
     setCopiedTab(tab);
-    toast.success("Copied to clipboard!");
+    toast.success("Code copied to clipboard!");
     setTimeout(() => setCopiedTab(null), 2000);
   };
 
   const cssCode = generateCSS();
+  const tailwindCode = generateTailwind();
+  const reactCode = generateReact();
   const svgCode = generateSVG();
   const canvasCode = generateCanvas();
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Code className="w-5 h-5" />
+      <div className="flex items-center gap-2 mb-2">
+        <Code className="w-5 h-5 text-primary" />
         <h3 className="text-lg font-semibold">Code Export</h3>
       </div>
+      <p className="text-sm text-muted-foreground mb-4">Best for websites (developers)</p>
+      
       <Tabs defaultValue="css" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="css">CSS</TabsTrigger>
+          <TabsTrigger value="tailwind">Tailwind</TabsTrigger>
+          <TabsTrigger value="react">React</TabsTrigger>
           <TabsTrigger value="svg">SVG</TabsTrigger>
           <TabsTrigger value="canvas">Canvas</TabsTrigger>
         </TabsList>
+        
         <TabsContent value="css" className="space-y-3">
           <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto">
             <code>{cssCode}</code>
           </pre>
-          <Button
-            onClick={() => handleCopy(cssCode, "css")}
-            className="w-full"
-            variant="secondary"
-          >
-            {copiedTab === "css" ? (
-              <Check className="w-4 h-4 mr-2" />
-            ) : (
-              <Copy className="w-4 h-4 mr-2" />
-            )}
-            {copiedTab === "css" ? "Copied!" : "Copy CSS"}
+          <Button onClick={() => handleCopy(cssCode, "css")} className="w-full" size="lg">
+            {copiedTab === "css" ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copiedTab === "css" ? "Copied!" : "Copy Code"}
           </Button>
         </TabsContent>
+        
+        <TabsContent value="tailwind" className="space-y-3">
+          <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+            <code>{tailwindCode}</code>
+          </pre>
+          <Button onClick={() => handleCopy(tailwindCode, "tailwind")} className="w-full" size="lg">
+            {copiedTab === "tailwind" ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copiedTab === "tailwind" ? "Copied!" : "Copy Code"}
+          </Button>
+        </TabsContent>
+        
+        <TabsContent value="react" className="space-y-3">
+          <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto max-h-[200px]">
+            <code>{reactCode}</code>
+          </pre>
+          <Button onClick={() => handleCopy(reactCode, "react")} className="w-full" size="lg">
+            {copiedTab === "react" ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copiedTab === "react" ? "Copied!" : "Copy Code"}
+          </Button>
+        </TabsContent>
+        
         <TabsContent value="svg" className="space-y-3">
           <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto max-h-[200px]">
             <code>{svgCode}</code>
           </pre>
-          <Button
-            onClick={() => handleCopy(svgCode, "svg")}
-            className="w-full"
-            variant="secondary"
-          >
-            {copiedTab === "svg" ? (
-              <Check className="w-4 h-4 mr-2" />
-            ) : (
-              <Copy className="w-4 h-4 mr-2" />
-            )}
-            {copiedTab === "svg" ? "Copied!" : "Copy SVG"}
+          <Button onClick={() => handleCopy(svgCode, "svg")} className="w-full" size="lg">
+            {copiedTab === "svg" ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copiedTab === "svg" ? "Copied!" : "Copy Code"}
           </Button>
         </TabsContent>
+        
         <TabsContent value="canvas" className="space-y-3">
           <pre className="p-4 bg-muted rounded-lg text-xs overflow-x-auto max-h-[200px]">
             <code>{canvasCode}</code>
           </pre>
-          <Button
-            onClick={() => handleCopy(canvasCode, "canvas")}
-            className="w-full"
-            variant="secondary"
-          >
-            {copiedTab === "canvas" ? (
-              <Check className="w-4 h-4 mr-2" />
-            ) : (
-              <Copy className="w-4 h-4 mr-2" />
-            )}
-            {copiedTab === "canvas" ? "Copied!" : "Copy Canvas"}
+          <Button onClick={() => handleCopy(canvasCode, "canvas")} className="w-full" size="lg">
+            {copiedTab === "canvas" ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+            {copiedTab === "canvas" ? "Copied!" : "Copy Code"}
           </Button>
         </TabsContent>
       </Tabs>

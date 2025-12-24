@@ -5,14 +5,15 @@ import { PropertiesPanel } from "@/components/PropertiesPanel";
 import { GradientPresets, GradientPreset } from "@/components/GradientPresets";
 import { SocialMediaExport } from "@/components/SocialMediaExport";
 import { CodeExport } from "@/components/CodeExport";
-import { GradientRandomizer } from "@/components/GradientRandomizer";
 import { GradientHistory } from "@/components/GradientHistory";
-import { GradientShare } from "@/components/GradientShare";
-import { ColorExtractor } from "@/components/ColorExtractor";
 import { BackToTop } from "@/components/BackToTop";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { AnimationPresets, AnimationPreset } from "@/components/AnimationPresets";
-import { ColorHarmonyAnalyzer } from "@/components/ColorHarmonyAnalyzer";
+import { GettingStartedStrip } from "@/components/GettingStartedStrip";
+import { PersonaToggle, Persona } from "@/components/PersonaToggle";
+import { BuilderAnimationSection } from "@/components/BuilderAnimationSection";
+import { AdvancedToolsSection } from "@/components/AdvancedToolsSection";
+import { ImageVideoExport } from "@/components/ImageVideoExport";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
@@ -35,29 +36,34 @@ const Index = () => {
     return {
       angle: 45,
       colors: ["#ec4899", "#8b5cf6", "#3b82f6"],
-      type: "linear" as "linear" | "radial" | "conic",
-      animationType: "rotate" as "rotate" | "slide-horizontal" | "slide-vertical" | "pulse" | "wave" | "diagonal" | "zoom" | "color-shift",
+      type: "linear" as const,
+      animationType: "rotate" as const,
       speed: 1,
-      direction: "forward" as "forward" | "reverse" | "alternate",
-      easing: "linear" as "linear" | "ease-in" | "ease-out" | "ease-in-out",
+      direction: "forward" as const,
+      easing: "linear" as const,
     };
   };
 
   const [gradient, setGradient] = useState(getInitialGradient);
-  const [effects, setEffects] = useState({
-    blur: 0,
-    noise: 0,
-  });
+  const [effects, setEffects] = useState({ blur: 0, noise: 0 });
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 });
   const [history, setHistory] = useState<typeof gradient[]>([getInitialGradient()]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    return localStorage.getItem("reduceMotion") === "true";
+  });
+  const [persona, setPersona] = useState<Persona>("developers");
 
   useEffect(() => {
     if (window.location.search) {
       toast.success("Loaded shared gradient!");
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("reduceMotion", reduceMotion.toString());
+  }, [reduceMotion]);
 
   const addToHistory = (newGradient: typeof gradient) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -89,8 +95,6 @@ const Index = () => {
       setHistoryIndex(newIndex);
       setGradient(history[newIndex]);
       toast.success("Undo");
-    } else {
-      toast.error("Nothing to undo");
     }
   };
 
@@ -100,36 +104,16 @@ const Index = () => {
       setHistoryIndex(newIndex);
       setGradient(history[newIndex]);
       toast.success("Redo");
-    } else {
-      toast.error("Nothing to redo");
     }
   };
 
   const handleExport = (format: "png" | "jpeg") => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const link = document.createElement("a");
     link.download = `gradient-background.${format}`;
     link.href = canvas.toDataURL(`image/${format}`);
     link.click();
-  };
-
-  const handleSaveShortcut = () => {
-    toast.info("Opening save dialog...");
-  };
-
-  const handleAnimationTypeChange = (type: string) => {
-    const newGradient = { ...gradient, animationType: type as any };
-    setGradient(newGradient);
-    addToHistory(newGradient);
-    toast.success(`Animation: ${type}`);
-  };
-
-  const handleSelectHistory = (index: number) => {
-    setHistoryIndex(index);
-    setGradient(history[index]);
-    toast.success("Loaded from history");
   };
 
   const handleApplyAnimationPreset = (preset: AnimationPreset) => {
@@ -144,12 +128,22 @@ const Index = () => {
     addToHistory(newGradient);
   };
 
+  const handleSelectHistory = (index: number) => {
+    setHistoryIndex(index);
+    setGradient(history[index]);
+    toast.success("Loaded from history");
+  };
+
   useKeyboardShortcuts({
     onExport: () => handleExport("png"),
-    onSave: handleSaveShortcut,
+    onSave: () => toast.info("Opening save dialog..."),
     onUndo: handleUndo,
     onRedo: handleRedo,
-    onAnimationType: handleAnimationTypeChange,
+    onAnimationType: (type) => {
+      const newGradient = { ...gradient, animationType: type as any };
+      setGradient(newGradient);
+      addToHistory(newGradient);
+    },
     onShowHelp: () => setShowKeyboardHelp(true),
   });
 
@@ -168,11 +162,13 @@ const Index = () => {
         currentGradient={gradient}
         history={history}
         savedGradients={getSavedGradients()}
+        reduceMotion={reduceMotion}
+        onReduceMotionChange={setReduceMotion}
       />
       
       <div className="flex flex-1 w-full">
-        {/* Left Sidebar - Animation Controls */}
-        <aside className="hidden lg:block w-80 border-r border-border bg-panel fixed left-0 top-16 bottom-0 overflow-y-auto">
+        {/* Left Sidebar */}
+        <aside className="hidden lg:block w-72 border-r border-border bg-panel fixed left-0 top-16 bottom-0 overflow-y-auto">
           <PropertiesPanel
             gradient={gradient}
             effects={effects}
@@ -186,21 +182,23 @@ const Index = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto lg:ml-80">
-          {/* Sticky Canvas Section */}
-          <div className="sticky top-0 z-10 bg-background border-b border-border p-4 lg:p-8">
-            <div className="flex items-center justify-center">
-              <Canvas
-                ref={canvasRef}
-                gradient={gradient}
-                effects={effects}
-                canvasSize={canvasSize}
-              />
-            </div>
+        <main className="flex-1 overflow-auto lg:ml-72">
+          {/* Sticky Canvas */}
+          <div className="sticky top-0 z-10 bg-background border-b border-border p-4 lg:p-6">
+            <Canvas
+              ref={canvasRef}
+              gradient={gradient}
+              effects={effects}
+              canvasSize={canvasSize}
+              reduceMotion={reduceMotion}
+            />
           </div>
 
           {/* Scrollable Content */}
           <div className="p-4 lg:p-8 space-y-8">
+            {/* Getting Started */}
+            <GettingStartedStrip />
+
             {/* Mobile Properties Panel */}
             <div className="lg:hidden">
               <PropertiesPanel
@@ -215,56 +213,84 @@ const Index = () => {
               />
             </div>
 
-            {/* Color Extractor - Above Canvas */}
-            <ColorExtractor
-              onApplyColors={(colors) => {
-                const newGradient = { ...gradient, colors };
-                handleGradientChange(newGradient);
-              }}
-            />
-
-            {/* Gradient History - Right after canvas */}
-            <GradientHistory
-              history={history}
-              currentIndex={historyIndex}
-              onSelectHistory={handleSelectHistory}
-            />
-
             {/* Gradient Presets */}
             <section>
-              <h2 className="text-[clamp(1.5rem,4vw,2rem)] font-bold mb-4">Gradient Presets</h2>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-foreground">Gradient Presets</h2>
+                <p className="text-sm text-muted-foreground">Start from beautiful ready-made looks</p>
+              </div>
               <GradientPresets onSelectPreset={handleSelectPreset} />
             </section>
 
             {/* Animation Presets */}
             <AnimationPresets onApplyPreset={handleApplyAnimationPreset} />
 
-            {/* Color Harmony Analyzer */}
-            <ColorHarmonyAnalyzer
-              colors={gradient.colors}
-              onApplySuggestion={(colors) => {
-                const newGradient = { ...gradient, colors };
-                handleGradientChange(newGradient);
-              }}
+            {/* Builder & Animation */}
+            <BuilderAnimationSection
+              gradient={gradient}
+              onGradientChange={handleGradientChange}
             />
 
-            {/* Smart Randomizer */}
-            <GradientRandomizer
-              onApplyGradient={(colors) => {
-                const newGradient = { ...gradient, colors };
-                handleGradientChange(newGradient);
-              }}
-              currentColors={gradient.colors}
+            {/* Advanced Tools (Collapsible) */}
+            <AdvancedToolsSection
+              gradient={gradient}
+              effects={effects}
+              onGradientChange={handleGradientChange}
+              onEffectsChange={setEffects}
             />
 
-            {/* Code Export */}
-            <CodeExport gradient={gradient} />
+            {/* History */}
+            <GradientHistory
+              history={history}
+              currentIndex={historyIndex}
+              onSelectHistory={handleSelectHistory}
+            />
 
-            {/* Gradient Share */}
-            <GradientShare gradient={gradient} />
+            {/* Export Section */}
+            <section className="space-y-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-foreground">Export</h2>
+                <p className="text-sm text-muted-foreground">Ship gradients to code, designs, and socials</p>
+              </div>
+              
+              <PersonaToggle value={persona} onChange={setPersona} />
 
-            {/* Social Media Export */}
-            <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
+              {persona === "developers" && (
+                <>
+                  <CodeExport gradient={gradient} />
+                  <ImageVideoExport 
+                    canvasRef={canvasRef} 
+                    canvasSize={canvasSize}
+                    onCanvasSizeChange={setCanvasSize} 
+                  />
+                  <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
+                </>
+              )}
+              
+              {persona === "designers" && (
+                <>
+                  <ImageVideoExport 
+                    canvasRef={canvasRef} 
+                    canvasSize={canvasSize}
+                    onCanvasSizeChange={setCanvasSize} 
+                  />
+                  <CodeExport gradient={gradient} />
+                  <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
+                </>
+              )}
+              
+              {persona === "creators" && (
+                <>
+                  <SocialMediaExport canvasRef={canvasRef} onCanvasSizeChange={setCanvasSize} />
+                  <ImageVideoExport 
+                    canvasRef={canvasRef} 
+                    canvasSize={canvasSize}
+                    onCanvasSizeChange={setCanvasSize} 
+                  />
+                  <CodeExport gradient={gradient} />
+                </>
+              )}
+            </section>
           </div>
         </main>
       </div>
