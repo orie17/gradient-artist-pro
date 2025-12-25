@@ -14,6 +14,9 @@ import { PersonaToggle, Persona } from "@/components/PersonaToggle";
 import { BuilderAnimationSection } from "@/components/BuilderAnimationSection";
 import { AdvancedToolsSection } from "@/components/AdvancedToolsSection";
 import { ImageVideoExport } from "@/components/ImageVideoExport";
+import { BrandKit } from "@/components/BrandKit";
+import { GradientMorph } from "@/components/GradientMorph";
+import { AnimationTimeline } from "@/components/AnimationTimeline";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
@@ -238,6 +241,37 @@ const Index = () => {
               onGradientChange={handleGradientChange}
               onEffectsChange={setEffects}
             />
+
+            {/* Brand Kit */}
+            <section>
+              <BrandKit
+                onApplyColors={(colors) => {
+                  const newGradient = { ...gradient, colors };
+                  setGradient(newGradient);
+                  addToHistory(newGradient);
+                }}
+              />
+            </section>
+
+            {/* Gradient Morphing */}
+            <section>
+              <GradientMorph
+                currentGradient={gradient}
+                onApplyGradient={(colors, angle) => {
+                  const newGradient = { ...gradient, colors, angle };
+                  setGradient(newGradient);
+                  addToHistory(newGradient);
+                }}
+              />
+            </section>
+
+            {/* Animation Timeline */}
+            <section>
+              <AnimationTimeline
+                gradient={gradient}
+                onGradientChange={(newGradient) => setGradient(newGradient)}
+              />
+            </section>
 
             {/* History */}
             <GradientHistory
