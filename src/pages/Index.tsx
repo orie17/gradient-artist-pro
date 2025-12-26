@@ -17,6 +17,9 @@ import { ImageVideoExport } from "@/components/ImageVideoExport";
 import { BrandKit } from "@/components/BrandKit";
 import { GradientMorph } from "@/components/GradientMorph";
 import { AnimationTimeline } from "@/components/AnimationTimeline";
+import { GradientLayers } from "@/components/GradientLayers";
+import { GradientAccessibilityChecker } from "@/components/GradientAccessibilityChecker";
+import { GradientSplitComparison } from "@/components/GradientSplitComparison";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
@@ -270,6 +273,56 @@ const Index = () => {
               <AnimationTimeline
                 gradient={gradient}
                 onGradientChange={(newGradient) => setGradient(newGradient)}
+              />
+            </section>
+
+            {/* Gradient Layers */}
+            <section>
+              <GradientLayers
+                currentGradient={gradient}
+                onApplyLayers={(layers) => {
+                  if (layers.length > 0 && layers[0].visible) {
+                    const primaryLayer = layers.find(l => l.visible) || layers[0];
+                    const newGradient = {
+                      ...gradient,
+                      colors: primaryLayer.colors,
+                      angle: primaryLayer.angle,
+                      type: primaryLayer.type,
+                    };
+                    setGradient(newGradient);
+                    addToHistory(newGradient);
+                  }
+                }}
+              />
+            </section>
+
+            {/* Accessibility Checker */}
+            <section>
+              <GradientAccessibilityChecker
+                gradient={gradient}
+                onApplySuggestion={(colors) => {
+                  const newGradient = { ...gradient, colors };
+                  setGradient(newGradient);
+                  addToHistory(newGradient);
+                }}
+              />
+            </section>
+
+            {/* Split Comparison */}
+            <section>
+              <GradientSplitComparison
+                currentGradient={gradient}
+                history={history}
+                savedGradients={getSavedGradients()}
+                onApplyGradient={(selectedGradient) => {
+                  const newGradient = {
+                    ...selectedGradient,
+                    easing: selectedGradient.easing || "linear" as const,
+                  };
+                  setGradient(newGradient);
+                  addToHistory(newGradient);
+                  toast.success("Gradient applied");
+                }}
               />
             </section>
 
